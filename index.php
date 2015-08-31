@@ -1,20 +1,16 @@
 <?php
 $error = false;
-if (isset($_POST['input'])){
-ini_set('memory_limit', '-1');
-ini_set('max_execution_time', 300);
-	$input = $_POST['input'];
-	$match = preg_match('`(images\.memorix\.nl/([a-z]{3})/thumb/([0-9]{2,3}x[0-9]{2,3}|detailresult)/)(.*?)\.jpg`', $input, $matches);
-	if ($match){
-		$institution = $matches[2];
-		$id = $matches[4];
-		$string = file_get_contents ('http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id);
+$succes = false;
+$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9]{2,3}x[0-9]{2,3}|detailresult|gallery_thumb|mediabank-detail)/(.*?)\.jpg`';
+$imagelink = str_replace(".", "", $_SERVER['REMOTE_ADDR']).".jpg";
+
+function generateImage($imagelink, $institution, $id){
+	$string = file_get_contents ('http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
 		$tileheight = $vars['topviews'][0]['tileHeight'];
 		$layers =$vars['topviews'][0]['layers'];
 		$layer = $layers[count($layers)-1];
-
 
 	$image = imagecreatetruecolor($layer['width'], $layer['height']);
 
@@ -26,12 +22,30 @@ ini_set('max_execution_time', 300);
 			imagecopy($image, $tile, $col * $tilewidth, $row * $tileheight, 0, 0, $tilewidth, $tileheight);
 		}
 	}
-
-	$imagelink = str_replace(".", "", $_SERVER['REMOTE_ADDR']).".jpg";
 	imagejpeg($image, $imagelink );
-
 	imagedestroy($image);
 	unset($image);
+	return $layer['width']."x".$layer['height'];
+}
+if (isset($_POST['input'])){	
+	ini_set('memory_limit', '-1');
+	ini_set('max_execution_time', 300);
+	$input = $_POST['input'];
+	$match = preg_match($regex, $input, $matches);
+	if ($match){
+	 $xy = generateImage($imagelink, $matches[2],  $matches[6]);
+		$succes = true;
+	}
+	elseif(filter_var(trim($_POST['input']), FILTER_VALIDATE_URL)){ //input is a URL
+		$content = file_get_contents(trim($_POST['input']));
+		$match = preg_match($regex, $content, $matches);
+		if ($match){
+		 $xy = generateImage($imagelink, $matches[2],  $matches[6]);
+			$succes = true;
+		}
+		else {
+			$error = true;
+		}
 	}
 	else{
 		$error = true;
@@ -64,9 +78,9 @@ function myFunction() {
 								<h2>Dememorixer</h2>
 			<p>Download de volle resolutie van een afbeelding die in een Memorix Maior viewer is geplaatst</p>
 		</div>					
-		<?php if (isset($imagelink)){
+		<?php if ($succes){
 			echo "<img src='".$imagelink."'  width='500'><br/>	";
-			echo "<a href='".$imagelink."' download>Download afbeelding</a>";
+			echo "<a href='".$imagelink."' download>Download afbeelding</a> (".$xy.")";
 		}
 		elseif ($error){
 			echo "<p>Er is iets misgegaan</p>";
@@ -78,7 +92,7 @@ function myFunction() {
 			<ul id="formulier">
 			
 					<li id="li_1" >
-		<label class="description" for="element_1">URL naar thumbnail / Insluiten informatie</label>
+		<label class="description" for="element_1">URL naar thumbnail / Insluiten informatie / Permalink naar pagina</label>
 		<div>
 <input id="input" name="input" class="element text medium" type="text" value=""/> 
 		
@@ -95,6 +109,7 @@ function myFunction() {
 		</form>	
 		<div id="footer">
 			Created by <a href="http://www.veradekok.nl">Vera de Kok</a><br/>
+			See <a href="https://github.com/VDK/Dememorixer" target="_blank">code on GitHub</a><br/>
 			Form generated with <a href="http://www.phpform.org">pForm</a>
 		</div>
 	</div>
