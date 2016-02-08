@@ -38,7 +38,7 @@ if (isset($_POST['input'])){
 	$succes = false;
 	ini_set('memory_limit', '-1');
 	ini_set('max_execution_time', 3000);
-	$input = $_POST['input'];
+	$input = trim($_POST['input']);
 	if (isset( $_POST['naam_afb']) && $_POST['naam_afb'] != ""){
 		$imagelink = $_POST['naam_afb'];
 	}
@@ -47,7 +47,7 @@ if (isset($_POST['input'])){
 		$xy =  $return["xy"];
 		$succes = $return['succes'];
 	}
-	else{
+	if(!$succes && filter_var($input, FILTER_VALIDATE_URL)){ //input is a URL
 		foreach ($beeldbanken as $beeldbank) {
 			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
 				$return = generateImage($imagelink, $beeldbank['abc'],  $matches[count($matches)-1]);
@@ -55,20 +55,20 @@ if (isset($_POST['input'])){
 				$succes = $return['succes'];
 			}
 		}
-	}
-	if(!$succes && filter_var(trim($_POST['input']), FILTER_VALIDATE_URL)){ //input is a URL
-		$content = file_get_contents(trim($_POST['input']));
-		if (preg_match($regex, $content, $matches)){
+		if (!$succes){
+			$content = file_get_contents(trim($_POST['input']));
+			if (preg_match($regex, $content, $matches)){
 
-		 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
-		 $xy = $return["xy"];
-			$succes = $return["succes"];
-		}
-		elseif(preg_match('`files\.archieven\.nl\/php\/get_thumb\.php\?adt_id=([0-9]{2,4})&(amp;)?toegang=([A-Z0-9]{2,3})&(amp;)?id=[0-9]{9}&(amp;)?file=([0-9A-Z]{2,3})(%5C|-)([0-9]{2,7})\.jpg`', $content, $matches)){
-			$imagelink = "http://files.archieven.nl/".$matches[1]."/f/".$matches[3]."/".$matches[6]."/".$matches[8].".jpg";
-			//http://files.archieven.nl/69/f/THA/27/986.jpg
-			$xy = "";
-			$succes = true;
+			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
+			 $xy = $return["xy"];
+				$succes = $return["succes"];
+			}
+			elseif(preg_match('`files\.archieven\.nl\/php\/get_thumb\.php\?adt_id=([0-9]{2,4})&(amp;)?toegang=([A-Z0-9]{2,3})&(amp;)?id=[0-9]{9}&(amp;)?file=([0-9A-Z]{2,3})(%5C|-)([0-9]{2,7})\.jpg`', $content, $matches)){
+				$imagelink = "http://files.archieven.nl/".$matches[1]."/f/".$matches[3]."/".$matches[6]."/".$matches[8].".jpg";
+				//http://files.archieven.nl/69/f/THA/27/986.jpg
+				$xy = "";
+				$succes = true;
+			}
 		}
 	}
 }
