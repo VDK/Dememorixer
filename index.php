@@ -1,11 +1,13 @@
 <?php
-$error = false;
-$succes = false;
-$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9]{2,3}x[0-9]{2,3}|detailresult|gallery_thumb|mediabank-detail)/(.*?)\.jpg`';
-$imagelink = str_replace(".", "", $_SERVER['REMOTE_ADDR']).".jpg";
+include_once('beeldbanken.php');
+$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9]{2,3}x[0-9]{2,3}|detailresult|gallery_thumb|mediabank-(detail|horizontal))/(.*?)\.jpg`';
+$imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
 function generateImage($imagelink, $institution, $id){
-	$string = file_get_contents ('http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id);
+	$json_link = 'http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id;
+	$test = get_headers($json_link, 1);
+ if ($test[0] == 'HTTP/1.1 200 OK'){
+		$string = file_get_contents ($json_link);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
 		$tileheight = $vars['topviews'][0]['tileHeight'];
@@ -25,30 +27,49 @@ function generateImage($imagelink, $institution, $id){
 	imagejpeg($image, $imagelink );
 	imagedestroy($image);
 	unset($image);
-	return $layer['width']."x".$layer['height'];
-}
-if (isset($_POST['input'])){	
-	ini_set('memory_limit', '-1');
-	ini_set('max_execution_time', 300);
-	$input = $_POST['input'];
-	$match = preg_match($regex, $input, $matches);
-	if ($match){
-	 $xy = generateImage($imagelink, $matches[2],  $matches[6]);
-		$succes = true;
-	}
-	elseif(filter_var(trim($_POST['input']), FILTER_VALIDATE_URL)){ //input is a URL
-		$content = file_get_contents(trim($_POST['input']));
-		$match = preg_match($regex, $content, $matches);
-		if ($match){
-		 $xy = generateImage($imagelink, $matches[2],  $matches[6]);
-			$succes = true;
-		}
-		else {
-			$error = true;
-		}
+	return array("succes" =>true, "xy" =>$layer['width']."x".$layer['height']);
 	}
 	else{
-		$error = true;
+		return array("succes" =>false,"xy" =>"404");
+	}
+}
+if (isset($_POST['input'])){	
+
+	$succes = false;
+	ini_set('memory_limit', '-1');
+	ini_set('max_execution_time', 3000);
+	$input = $_POST['input'];
+	if (isset( $_POST['naam_afb']) && $_POST['naam_afb'] != ""){
+		$imagelink = $_POST['naam_afb'];
+	}
+	if (preg_match($regex, $input, $matches)){
+	 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
+		$xy =  $return["xy"];
+		$succes = $return['succes'];
+	}
+	else{
+		foreach ($beeldbanken as $beeldbank) {
+			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
+				$return = generateImage($imagelink, $beeldbank['abc'],  $matches[count($matches)-1]);
+				$xy =  $return["xy"];
+				$succes = $return['succes'];
+			}
+		}
+	}
+	if(!$succes && filter_var(trim($_POST['input']), FILTER_VALIDATE_URL)){ //input is a URL
+		$content = file_get_contents(trim($_POST['input']));
+		if (preg_match($regex, $content, $matches)){
+
+		 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
+		 $xy = $return["xy"];
+			$succes = $return["succes"];
+		}
+		elseif(preg_match('`files\.archieven\.nl\/php\/get_thumb\.php\?adt_id=([0-9]{2,4})&(amp;)?toegang=([A-Z0-9]{2,3})&(amp;)?id=[0-9]{9}&(amp;)?file=([0-9A-Z]{2,3})(%5C|-)([0-9]{2,7})\.jpg`', $content, $matches)){
+			$imagelink = "http://files.archieven.nl/".$matches[1]."/f/".$matches[3]."/".$matches[6]."/".$matches[8].".jpg";
+			//http://files.archieven.nl/69/f/THA/27/986.jpg
+			$xy = "";
+			$succes = true;
+		}
 	}
 }
 	?>
@@ -61,15 +82,16 @@ if (isset($_POST['input'])){
 <script type="text/javascript" src="view.js"></script>
 <script type="text/javascript">
 function myFunction() {
-	document.getElementById("wachten").style.visibility = "visible";
+	document.getElementById("wachten").style.display = "block";
  document.getElementById("formulier").style.visibility = "hidden";
+ document.getElementById("previous").style.visibility = "hidden";
  document.getElementById("form_1046651").submit();
 }
 </script>
 </head>
 <body id="main_body" >
 	
-	<img id="top" src="top.png" alt="">
+	<img id="top" src="img/top.png" alt="">
 	<div id="form_container">
 	
 		<h1><a>Dememorixer </a></h1>
@@ -77,29 +99,42 @@ function myFunction() {
 					<div class="form_description">
 								<h2>Dememorixer</h2>
 			<p>Download de volle resolutie van een afbeelding die in een Memorix Maior viewer is geplaatst</p>
-		</div>					
-		<?php if ($succes){
+		</div>				
+		<div id="previous">
+		<?php 
+		if (isset($succes)){
+			if ($succes){
 			echo "<img src='".$imagelink."'  width='500'><br/>	";
-			echo "<a href='".$imagelink."' download>Download afbeelding</a> (".$xy.")";
+			echo "<p><a href='".$imagelink."' download>Download afbeelding</a> (".$xy.")</p>";
 		}
-		elseif ($error){
+		elseif (isset($xy) && $xy == "404"){
+			echo "<p>Er is geen hogere resoultie te downloaden, je moet het helaas doen met de thumbnail</p>";
+		}
+		else{
 			echo "<p>Er is iets misgegaan</p>";
-		}?>
-		<ul id="wachten" style="visibility:hidden;">
+		}
+	}?>
+</div>
+		<ul id="wachten" style="display:none;">
 			<li id="li_1" >
-		<label class="description" for="element_1">WACHTEN</label>
+		<label class="description" for="element_1">WACHTEN</label><p id="wachten"><img   src="img/loader.gif" width="32px"  height="32px" /></p>
 			</ul>
 			<ul id="formulier">
 			
 					<li id="li_1" >
-		<label class="description" for="element_1">URL naar thumbnail / Insluiten informatie / Permalink naar pagina</label>
+		<label class="description" for="element_1">URL naar thumbnail / "Insluiten" informatie / Permalink naar pagina</label>
 		<div>
-<input id="input" name="input" class="element text medium" type="text" value=""/> 
-		
+<input id="input" name="input" class="element text medium" type="text" value=""/> 		
 		</div> 
 		<p class="guidelines" id="guide_1"><small>ziet er uit als https://images.memorix.nl/abc/thumb/250x250/51d542ba-fe9f-8cab-3434-41a91438e94e.jpg</small></p>
 		</li>
-			
+				<li id="li_1" style="display:none;"> <!-- server raakt vol als iedereen voor elke foto een nieuwe bestandsnaam aanmaakt. -->
+		<label class="description" for="element_1">Naam afbeelding</label>
+		<div>
+<input id="naam_afb" name="naam_afb" class="element text medium" type="text" value=""/> 		
+		</div> 
+	
+		</li>
 					<li class="buttons">
 			    <input type="hidden" name="form_id" value="1046651" />
 			    
@@ -113,6 +148,16 @@ function myFunction() {
 			Form generated with <a href="http://www.phpform.org">pForm</a>
 		</div>
 	</div>
-	<img id="bottom" src="bottom.png" alt="">
+	<img id="bottom" src="img/bottom.png" alt="">
 	</body>
 </html>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-24261970-3', 'auto');
+  ga('send', 'pageview');
+
+</script>
