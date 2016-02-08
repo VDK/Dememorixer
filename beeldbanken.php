@@ -1,36 +1,24 @@
 <?php
-$beeldbanken = array();
-array_push($beeldbanken, array(
-		"url" => "koninklijkeverzamelingen\.nl\/collectie-online", 
-		"abc" => "kha" 
-		));
-array_push($beeldbanken, array(
+$beeldbanken = array(array(
+	"url" => "koninklijkeverzamelingen\.nl\/collectie-online", 
+	"tla" => "kha" 
+	), array(
 	"url" => "beeldbankgroningen\.nl\/beelden", 
-	"abc" => "gra" 
-	));
-
-array_push($beeldbanken, array(
+	"tla" => "gra" 
+	), array(
 	"url" => "rhcrijnstreek\.nl\/bronnen\/foto-s-en-kaarten\/zoeken", 
-	"abc" => "srs" 
-	));
-
-array_push($beeldbanken, array(
+	"tla" => "srs" 
+	), array(
 	"url" => "salha\.nl\/archieven-en-collecties\/beeld\/beeldbank", 
-	"abc" => "sha" 
-	));
-
-array_push($beeldbanken, array(
+	"tla" => "sha" 
+	), array(
 	"url" => "archief\.zaanstad\.nl\/beeldbank", 
-	"abc" => "zaa" 
-	));
-
-array_push($beeldbanken, array(
+	"tla" => "zaa" 
+	), array(
 	"url" => "regionaalarchiefzutphen\.nl\/beeld", 
-	"abc" => "szu" 
-	));
-
-array_push($beeldbanken, array(
+	"tla" => "szu" 
+	), array(
 	"url" => "noord-hollandsarchief\.nl\/beelden\/beeldbank", 
-	"abc" => "ranh" 
+	"tla" => "ranh" 
 	));
 ?>

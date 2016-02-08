@@ -50,7 +50,7 @@ if (isset($_POST['input'])){
 	elseif(!$succes && filter_var($input, FILTER_VALIDATE_URL)){ //input is a URL
 		foreach ($beeldbanken as $beeldbank) {
 			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
-				$return = generateImage($imagelink, $beeldbank['abc'],  $matches[count($matches)-1]);
+				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-1]);
 				$xy =  $return["xy"];
 				$succes = $return['succes'];
 			}
