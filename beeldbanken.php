@@ -1,6 +1,6 @@
 <?php
 $beeldbanken = array(array(
-	"url" => "koninklijkeverzamelingen\.nl\/collectie-online", 
+	"url" => "koninklijkeverzamelingen\.nl\/(collectie-online|mediabank)", 
 	"tla" => "kha" 
 	), array(
 	"url" => "beeldbankgroningen\.nl\/beelden", 
