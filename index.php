@@ -1,6 +1,6 @@
 <?php
 include_once('beeldbanken.php');
-$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9]{2,3}x[0-9]{2,3}(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal))/(.*?)\.jpg`';
+$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal))/(.*?)\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
 function generateImage($imagelink, $institution, $id){
