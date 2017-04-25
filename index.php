@@ -30,7 +30,30 @@ function generateImage($imagelink, $institution, $id){
 	return array("succes" =>true, "xy" =>$layer['width']."x".$layer['height']);
 	}
 	else{
+		if ($institution == 'rkd'){
+			$tinythumb  = imagecreatefromjpeg('https://images.memorix.nl/rkd/thumb/500x500/'.$id.'.jpg');
+			$largeThumb = imagecreatefromjpeg('https://images.memorix.nl/rkd/thumb/650x650/'.$id.'.jpg');
+			$negative = imagecreatefrompng('img/rkd-watermark.png');
+			$with	= ImageSX($largeThumb);
+			$height	= ImageSY($largeThumb);
+			$stamp = imagecreatetruecolor(imagesx($negative), imagesy($negative));
+			imagecopyresampled($stamp, $tinythumb, 0, 0, 0, 0, $with, $height,  ImageSX($tinythumb), ImageSY($tinythumb));
+			imagecopyresampled($stamp, $negative, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
+			imagecolortransparent ( $stamp ,imagecolorallocate($stamp, 3, 255, 3) );
+			imagefill($stamp,0,0,0x7fff0000);
+			
+			$image = imagecreatetruecolor($with, $height);
+			imagecopyresampled($image, $largeThumb, 0, 0, 0, 0, $with, $height, $with, $height);
+			imagecopyresampled($image, $stamp, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
+
+			imagejpeg($image, $imagelink );
+
+
+	return array("succes" =>true, "xy" =>$with."x".$height);
+		}
+
 		return array("succes" =>false,"xy" =>"404");
+
 	}
 }
 if (isset($_POST['input'])){	
@@ -104,6 +127,7 @@ function myFunction() {
 		<?php 
 		if (isset($succes)){
 			if ($succes){
+				// $imagelink = str_replace(".jpg",".png", $imagelink);
 			echo "<img src='".$imagelink."'  width='500'><br/>	";
 			echo "<p><a href='".$imagelink."' download>Download afbeelding</a> (".$xy.")</p>";
 		}
