@@ -1,6 +1,6 @@
 <?php
 include_once('beeldbanken.php');
-$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal))/(.*?)\.jpg`';
+$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)(\/[0-9]+)?\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
 function generateImage($imagelink, $institution, $id){
@@ -36,20 +36,24 @@ function generateImage($imagelink, $institution, $id){
 			$negative = imagecreatefrompng('img/rkd-watermark.png');
 			$with	= ImageSX($largeThumb);
 			$height	= ImageSY($largeThumb);
+
+			//create stamp out of 500x500 thumb
 			$stamp = imagecreatetruecolor(imagesx($negative), imagesy($negative));
 			imagecopyresampled($stamp, $tinythumb, 0, 0, 0, 0, $with, $height,  ImageSX($tinythumb), ImageSY($tinythumb));
 			imagecopyresampled($stamp, $negative, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
-			imagecolortransparent ( $stamp ,imagecolorallocate($stamp, 3, 255, 3) );
+			imagecolortransparent ($stamp ,imagecolorallocate($stamp, 3, 255, 3) );
 			imagefill($stamp,0,0,0x7fff0000);
-			
+
+			//add stamp to 650x650 version
 			$image = imagecreatetruecolor($with, $height);
 			imagecopyresampled($image, $largeThumb, 0, 0, 0, 0, $with, $height, $with, $height);
 			imagecopyresampled($image, $stamp, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
 
 			imagejpeg($image, $imagelink );
+			imagedestroy($image);
+			unset($image);
 
-
-	return array("succes" =>true, "xy" =>$with."x".$height);
+			return array("succes" =>true, "xy" =>$with."x".$height);
 		}
 
 		return array("succes" =>false,"xy" =>"404");
@@ -63,17 +67,17 @@ if (isset($_POST['input'])){
 	ini_set('max_execution_time', 3000);
 	$input = trim($_POST['input']);
 	if (isset( $_POST['naam_afb']) && $_POST['naam_afb'] != ""){
-		$imagelink = $_POST['naam_afb'];
+		$imagelink = strip_tags($_POST['naam_afb']);
 	}
 	if (preg_match($regex, $input, $matches)){
-	 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
+	 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-2]);
 		$xy =  $return["xy"];
 		$succes = $return['succes'];
 	}
 	elseif(!$succes && filter_var($input, FILTER_VALIDATE_URL)){ //input is a URL
 		foreach ($beeldbanken as $beeldbank) {
 			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
-				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-1]);
+				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-2]);
 				$xy =  $return["xy"];
 				$succes = $return['succes'];
 			}
@@ -82,7 +86,7 @@ if (isset($_POST['input'])){
 			$content = file_get_contents(trim($_POST['input']));
 			if (preg_match($regex, $content, $matches)){
 
-			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
+			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-2]);
 			 $xy = $return["xy"];
 				$succes = $return["succes"];
 			}
