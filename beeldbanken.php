@@ -21,6 +21,9 @@ $beeldbanken = array(array(
 	"url" => "noord-hollandsarchief\.nl\/beelden\/beeldbank", 
 	"tla" => "ranh" 
 	), array(
+	"url" => "hdl\.handle\.net\/", 
+	"tla" => "ranh" 
+	), array(
 	"url" => "zoeken\.hetnieuweinstituut\.nl\/(nl|en)", 
 	"tla" => "nai" 
 	));
