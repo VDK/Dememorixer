@@ -1,10 +1,11 @@
 <?php
 include_once('beeldbanken.php');
-$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)(\/[0-9]+)?\.jpg`';
+$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
 function generateImage($imagelink, $institution, $id){
 	$json_link = 'http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id;
+
 	$test = get_headers($json_link, 1);
  if ($test[0] == 'HTTP/1.1 200 OK'){
 		$string = file_get_contents ($json_link);
@@ -70,14 +71,14 @@ if (isset($_POST['input'])){
 		$imagelink = strip_tags($_POST['naam_afb']);
 	}
 	if (preg_match($regex, $input, $matches)){
-	 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-2]);
+	 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
 		$xy =  $return["xy"];
 		$succes = $return['succes'];
 	}
 	elseif(!$succes && filter_var($input, FILTER_VALIDATE_URL)){ //input is a URL
 		foreach ($beeldbanken as $beeldbank) {
 			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
-				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-2]);
+				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-1]);
 				$xy =  $return["xy"];
 				$succes = $return['succes'];
 			}
@@ -86,7 +87,7 @@ if (isset($_POST['input'])){
 			$content = file_get_contents(trim($_POST['input']));
 			if (preg_match($regex, $content, $matches)){
 
-			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-2]);
+			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
 			 $xy = $return["xy"];
 				$succes = $return["succes"];
 			}
