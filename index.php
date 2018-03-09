@@ -1,11 +1,13 @@
 <?php
 include_once('beeldbanken.php');
-$regex = '`(images\.memorix|afbeeldingen\.gahetna)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)\.jpg`';
+$regex = '`(images\.memorix|afbeeldingen\.gahetna|images\.rkd)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
 function generateImage($imagelink, $institution, $id){
 	$json_link = 'http://images.memorix.nl/'.$institution.'/topviewjson/memorix/'.$id;
-
+	if ($institution == 'rkd'){
+		$json_link = 'https://images.rkd.nl/rkd/topviewjson/memorix/'.$id;
+	}
 	$test = get_headers($json_link, 1);
  if ($test[0] == 'HTTP/1.1 200 OK'){
 		$string = file_get_contents ($json_link);
