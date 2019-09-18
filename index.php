@@ -1,5 +1,5 @@
 <?php
-include_once('beeldbanken.php');
+$beeldbanken = json_decode(file_get_contents("beeldbanken.json"), true);
 $regex = '`(images\.memorix|afbeeldingen\.gahetna|images\.rkd)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
@@ -33,7 +33,7 @@ function generateImage($imagelink, $institution, $id){
 		return array("succes" =>true, "xy" =>$layer['width']."x".$layer['height']);
 	}
 	else{
-	
+
 		return array("succes" =>false,"xy" =>"404");
 
 	}
