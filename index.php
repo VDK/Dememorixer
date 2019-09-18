@@ -9,7 +9,7 @@ function generateImage($imagelink, $institution, $id){
 		$json_link = 'https://images.rkd.nl/rkd/topviewjson/memorix/'.$id;
 	}
 	$test = get_headers($json_link, 1);
- if ($test[0] == 'HTTP/1.1 200 OK'){
+ 	if ($test[0] == 'HTTP/1.1 200 OK'){
 		$string = file_get_contents ($json_link);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
@@ -17,48 +17,23 @@ function generateImage($imagelink, $institution, $id){
 		$layers =$vars['topviews'][0]['layers'];
 		$layer = $layers[count($layers)-1];
 
-	$image = imagecreatetruecolor($layer['width'], $layer['height']);
+		$image = imagecreatetruecolor($layer['width'], $layer['height']);
 
-	for ($row=0; $row < $layer['rows']; $row++) { 
-		for ($col=0; $col < $layer['cols']; $col++) { 
-		 $url = 'http://images.memorix.nl/'.$institution.'/getpic/'.$id.'/';
-			$url .= $layer['starttile']+$row*$layer['cols']+$col.'.jpg';
-			$tile = imagecreatefromjpeg($url);
-			imagecopy($image, $tile, $col * $tilewidth, $row * $tileheight, 0, 0, $tilewidth, $tileheight);
+		for ($row=0; $row < $layer['rows']; $row++) { 
+			for ($col=0; $col < $layer['cols']; $col++) { 
+			 $url = 'http://images.memorix.nl/'.$institution.'/getpic/'.$id.'/';
+				$url .= $layer['starttile']+$row*$layer['cols']+$col.'.jpg';
+				$tile = imagecreatefromjpeg($url);
+				imagecopy($image, $tile, $col * $tilewidth, $row * $tileheight, 0, 0, $tilewidth, $tileheight);
+			}
 		}
-	}
-	imagejpeg($image, $imagelink );
-	imagedestroy($image);
-	unset($image);
-	return array("succes" =>true, "xy" =>$layer['width']."x".$layer['height']);
+		imagejpeg($image, $imagelink );
+		imagedestroy($image);
+		unset($image);
+		return array("succes" =>true, "xy" =>$layer['width']."x".$layer['height']);
 	}
 	else{
-		if ($institution == 'rkd'){
-			$tinythumb  = imagecreatefromjpeg('https://images.memorix.nl/rkd/thumb/500x500/'.$id.'.jpg');
-			$largeThumb = imagecreatefromjpeg('https://images.memorix.nl/rkd/thumb/650x650/'.$id.'.jpg');
-			$negative = imagecreatefrompng('img/rkd-watermark.png');
-			$with	= ImageSX($largeThumb);
-			$height	= ImageSY($largeThumb);
-
-			//create stamp out of 500x500 thumb
-			$stamp = imagecreatetruecolor(imagesx($negative), imagesy($negative));
-			imagecopyresampled($stamp, $tinythumb, 0, 0, 0, 0, $with, $height,  ImageSX($tinythumb), ImageSY($tinythumb));
-			imagecopyresampled($stamp, $negative, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
-			imagecolortransparent ($stamp ,imagecolorallocate($stamp, 3, 255, 3) );
-			imagefill($stamp,0,0,0x7fff0000);
-
-			//add stamp to 650x650 version
-			$image = imagecreatetruecolor($with, $height);
-			imagecopyresampled($image, $largeThumb, 0, 0, 0, 0, $with, $height, $with, $height);
-			imagecopyresampled($image, $stamp, 0, 0, 0, 0, imagesx($negative), imagesy($negative), imagesx($negative), imagesy($negative));
-
-			imagejpeg($image, $imagelink );
-			imagedestroy($image);
-			unset($image);
-
-			return array("succes" =>true, "xy" =>$with."x".$height);
-		}
-
+	
 		return array("succes" =>false,"xy" =>"404");
 
 	}
