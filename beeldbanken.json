@@ -30,6 +30,10 @@
 	{
 	"url" : "zoeken\\.hetnieuweinstituut\\.nl\\/(nl|en)\\/objecten/", 
 	"tla" : "nai" 
+	},
+	{
+	"url" : "nationaalarchief\\.nl\\/", 
+	"tla" : "naa" 
 	}
 ]
 

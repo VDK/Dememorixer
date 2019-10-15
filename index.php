@@ -1,5 +1,6 @@
 <?php
 $beeldbanken = json_decode(file_get_contents("beeldbanken.json"), true);
+include('http-redirect-target.php');
 $regex = '`(images\.memorix|afbeeldingen\.gahetna|images\.rkd)\.nl/([a-z\-_]{3,6})/(getpic|thumb/(image(bank)?-)?([0-9x]+(crop)?|detailresult|gallery_thumb|mediabank-(detail|horizontal)))\/([0-9a-z\-]*?)\.jpg`';
 $imagelink = preg_replace("`[\.:]`", "", $_SERVER['REMOTE_ADDR']).".jpg";
 
@@ -61,13 +62,30 @@ if (isset($_POST['input'])){
 			}
 		}
 		if (!$succes){
-			$content = file_get_contents(trim($_POST['input']));
+			//one last try to get identifier from raw html
+			$content = file_get_contents($input);
 			if (preg_match($regex, $content, $matches)){
 
 			 $return = generateImage($imagelink, $matches[2],  $matches[count($matches)-1]);
 			 $xy = $return["xy"];
 				$succes = $return["succes"];
 			}
+				
+
+			if(preg_match('`https?:\/\/proxy\.handle.net\/\d{4,6}/[a-z\-\d]`', $input)){
+				$input = get_redirect_final_target($input);
+			}
+			if (preg_match('`"config_topviewer":\{"id":"([0-9a-z\-]+)"`', $content, $matches)){
+				$photoid = $matches[1];
+				foreach ($beeldbanken as $beeldbank) {
+					if(preg_match('`'.$beeldbank['url'].'`', $input )){
+						$return = generateImage($imagelink, $beeldbank['tla'],  $photoid);
+						$xy =  $return["xy"];
+						$succes = $return['succes'];
+					}
+				}
+			}
+			//simple support for arhieven.nl
 			elseif(preg_match('`files\.archieven\.nl\/php\/get_thumb\.php\?adt_id=([0-9]{2,4})&(amp;)?toegang=([A-Z0-9]{2,3})&(amp;)?id=[0-9]{9}&(amp;)?file=([0-9A-Z]{2,3})(%5C|-)([0-9]{2,7})\.jpg`', $content, $matches)){
 				$imagelink = "http://files.archieven.nl/".$matches[1]."/f/".$matches[3]."/".$matches[6]."/".$matches[8].".jpg";
 				//http://files.archieven.nl/69/f/THA/27/986.jpg
