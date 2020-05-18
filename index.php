@@ -10,7 +10,7 @@ function generateImage($imagelink, $institution, $id){
 		$json_link = 'https://images.rkd.nl/rkd/topviewjson/memorix/'.$id;
 	}
 	$test = get_headers($json_link, 1);
- 	if ($test[0] == 'HTTP/1.1 200 OK'){
+ 	if ($test[0] == 'HTTP/1.1 200 OK' || $test[0] == 'HTTP/1.1 200 '){
 		$string = file_get_contents ($json_link);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
