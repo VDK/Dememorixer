@@ -11,6 +11,7 @@ function generateImage($imagelink, $institution, $id){
 	}
 	$test = get_headers($json_link, 1);
  	if (trim($test[0]) == 'HTTP/1.1 200 OK' || trim($test[1]) == 'HTTP/1.1 200'  ){
+ 	if (in_array(trim($test[0]) , ['HTTP/1.1 200 OK', 'HTTP/1.1 200']) || in_array(trim(@$test[1]) == ['HTTP/1.1 200 OK', 'HTTP/1.1 200'])  ){
 		$string = file_get_contents ($json_link);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
