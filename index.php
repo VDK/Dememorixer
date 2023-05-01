@@ -10,7 +10,7 @@ function generateImage($imagelink, $institution, $id){
 		$json_link = 'https://images.rkd.nl/rkd/topviewjson/memorix/'.$id;
 	}
 	$test = get_headers($json_link, 1);
- 	if ($test[0] == 'HTTP/1.1 200 OK' || $test[0] == 'HTTP/1.1 200 '){
+ 	if (trim($test[0]) == 'HTTP/1.1 200 OK' || trim($test[1]) == 'HTTP/1.1 200'  ){
 		$string = file_get_contents ($json_link);
 		$vars = json_decode($string, true);
 		$tilewidth = $vars['topviews'][0]['tileWidth'];
@@ -55,6 +55,7 @@ if (isset($_POST['input'])){
 	}
 	elseif(!$succes && filter_var($input, FILTER_VALIDATE_URL)){ //input is a URL
 		foreach ($beeldbanken as $beeldbank) {
+
 			if(preg_match('`https?:\/\/(www\.)?'.$beeldbank['url'].'\/detail\/[a-z0-9\-]{36}\/media\/([a-z0-9\-]{36})`', $input, $matches)){
 				$return = generateImage($imagelink, $beeldbank['tla'],  $matches[count($matches)-1]);
 				$xy =  $return["xy"];
